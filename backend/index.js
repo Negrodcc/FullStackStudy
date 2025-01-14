@@ -9,32 +9,11 @@ app.use(express.static('dist'))
 app.use(cors())
 app.use(express.json())
 
-let notes = [
-  {
-    id: 1,
-    content: "HTML is easy",
-    date: "2022-01-10T17:30:31.098Z",
-    important: true
-  },
-  {
-    id: 2,
-    content: "Browser can execute only Javascript",
-    date: "2022-01-10T18:39:34.091Z",
-    important: false
-  },
-  {
-    id: 3,
-    content: "GET and POST are the most important methods of HTTP protocol",
-    date: "2022-01-10T19:20:14.298Z",
-    important: true
-  }
-]
-
 app.get('/', (req, res) => {
   res.send('<h1>Hello World!</h1>')
 })
 
-app.post('/api/notes', (request, response) => {
+app.post('/api/notes', (request, response, next) => {
   const body = request.body
 
   if (!body.content) {
@@ -54,6 +33,7 @@ app.post('/api/notes', (request, response) => {
       console.log("the note has been saved")
       response.json(savedNote)
     })
+    .catch(error => next(error))
 })
 
 app.get('/api/notes', (request, response) => {
@@ -62,21 +42,57 @@ app.get('/api/notes', (request, response) => {
   })
 })
 
-app.delete('/api/notes/:id', (request, response) => {
-  const id = Number(request.params.id)
-  notes = notes.filter(note => note.id !== id)
-
-  response.status(204).end()
+app.delete('/api/notes/:id', (request, response, next) => {
+  Note.findByIdAndDelete(request.params.id)
+    .then(result => {
+      console.log("the following note has been deleted : ", result)
+      response.status(204).end()
+    })
+    .catch(error => next(error))
 })
 
-app.get('/api/notes/:id', (request, response) => {
+app.put('/api/notes/:id', (request, response, next) => {
+  const {content, important} = request.body
+  Note.findByIdAndUpdate(request.params.id, {content, important}, { new: true, runValidators: true, context: 'query'})
+    .then(updatedNote => {
+      console.log("the note now is : ", updatedNote)
+      response.status(204).end()
+    })
+    .catch(error => next(error))
+})
+
+app.get('/api/notes/:id', (request, response, next) => {
   Note.findById(request.params.id). 
     then(note => {
-      response.json(note)
+      if (note) {
+        response.json(note)
+      }
+      //if the note is not found, it will be null
+      else {
+        response.status(404).end() //bad request
+      }
     })
+    .catch(error => next(error))
 })
 
-const PORT = process.env.PORT
+const errorHandler = (error, request, response, next) => {
+  console.log(error.message)
+
+  if (error.name === "CastError") {
+    return response.status(400).send({ error: 'malformatted id' })
+  }
+  else if (error.name === "ValidationError"){
+    return response.status(400).send({ error: error.message })
+  }
+
+  next(error)
+}
+
+// this has to be the last loaded middleware, also all the routes
+//  should be registered before this!
+app.use(errorHandler)
+
+const PORT = process.env.PORT || 3001
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`)
 })
