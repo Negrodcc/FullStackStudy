@@ -29,3 +29,21 @@ Content-Type: application/json
     "content": "lolazo",
     "important": true
 }
+### Post a note with the user data 
+POST http://localhost:3001/api/notes HTTP/1.1
+Content-Type: application/json
+
+{
+  "content": "User id of the note creator is at the start sent along the request",
+  "important": true,
+  "userId": "67a64acaa68abcee48da60da"
+}
+### POST a nothe with the correct Token
+POST http://localhost:3001/api/notes HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InJvb3QgMyIsImlkIjoiNjdhNjRhY2FhNjhhYmNlZTQ4ZGE2MGRhIiwiaWF0IjoxNzM4OTU2MDUxfQ.-kC_lc-NLSLh1V8W8laLoxBhgFfeWWJemt-lJ_0w1mg
+
+{
+    "content": "First note made with a TOKEN",
+    "importat": true
+}
