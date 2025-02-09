@@ -45,13 +45,6 @@ notesRouter.post('/', async (request, response) => {
   user.notes = user.notes.concat(savedNote._id) //add the note to the user with concat
   await user.save() //save the data
   
-  // token expires in 60*60 seconds, that is, in one hour
-  const token = jwt.sign(
-    userForToken, 
-    process.env.SECRET,
-    { expiresIn: 60*60 }
-  )
-
   response.status(201).json(savedNote)
 })
 
